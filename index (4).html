@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Arzon Shop PRO</title>
+<style>
+:root{--bg:#f5f6ff;--card:#fff;--text:#111;--primary:#6c5ce7}
+.dark{--bg:#0f0f14;--card:#1e1e28;--text:#fff}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:var(--bg);color:var(--text)}
+.header{background:var(--card);padding:12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:20}
+.logo{font-weight:800;color:var(--primary);font-size:22px}
+.sel,.icon-btn{padding:8px 12px;border-radius:10px;border:1px solid #ddd;background:var(--card);color:var(--text);cursor:pointer}
+.admin-btn{background:var(--primary);color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:700;display:none;cursor:pointer}
+.admin-btn.show{display:block}
+.hero{background:linear-gradient(135deg,#6c5ce7,#fd79a8);color:#fff;padding:20px 15px;text-align:center}
+.hero h2{font-size:18px;margin-bottom:6px;}
+.hero p{font-size:13px;line-height:1.4;}
+.search-container{padding:12px 20px 0;max-width:1200px;margin:0 auto}
+.search-input{width:100%;padding:12px;border:2px solid #ddd;border-radius:12px;background:var(--card);color:var(--text);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:20px;max-width:1200px;margin:0 auto}
+.card{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.06);position:relative}
+.card img{width:100%;height:160px;object-fit:cover}
+.card-body{padding:12px}
+.price{color:var(--primary);font-weight:800}
+.old{color:#888;text-decoration:line-through;font-size:12px;margin-left:5px}
+.order-btn{background:var(--primary);color:#fff;width:100%;padding:10px;border:none;border-radius:10px;margin-top:8px;font-weight:700;cursor:pointer}
+.del-card{position:absolute;top:8px;left:8px;background:red;color:#fff;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;display:none;cursor:pointer;z-index:5}
+.dark .del-card{background:#ff4757}
+.card.owner .del-card{display:block}
+#adminPanel, #settingsPanel, #cartModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;overflow:auto;align-items:center;justify-content:center;padding:15px;}
+.admin-box{background:var(--card);width:100%;max-width:420px;padding:20px;border-radius:20px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,0.2);}
+.input{width:100%;padding:12px;border:2px solid #eee;border-radius:10px;margin:8px 0;background:var(--card);color:var(--text)}
+.upload-box{border:2px dashed var(--primary);padding:15px;text-align:center;border-radius:12px;margin:10px 0;background:var(--bg);position:relative;cursor:pointer}
+#chatBtn{position:fixed;bottom:20px;right:20px;background:var(--primary);color:#fff;width:60px;height:60px;border-radius:50%;border:none;font-size:28px;z-index:30;cursor:pointer}
+#cartBtnFixed{position:fixed;bottom:20px;left:20px;background:#00b894;color:#fff;width:60px;height:60px;border-radius:50%;border:none;font-size:24px;z-index:30;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+.cart-badge{position:absolute;top:0;right:0;background:red;color:#fff;border-radius:50%;width:22px;height:22px;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:bold;}
+#chatBox{display:none;position:fixed;bottom:90px;right:20px;width:340px;max-width:90vw;height:420px;background:var(--card);border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.2);z-index:30;flex-direction:column;overflow:hidden}
+.chat-head{background:var(--primary);color:#fff;padding:15px;display:flex;justify-content:space-between;align-items:center}
+.chat-msgs{flex:1;padding:15px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.msg{padding:10px 14px;border-radius:14px;max-width:80%;font-size:14px}
+.msg.user{background:var(--primary);color:#fff;align-self:flex-end}
+.msg.owner{background:var(--bg);color:var(--text);align-self:flex-start;border:1px solid #eee}
+.chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid #eee}
+.modal-content{background:var(--card);padding:20px;border-radius:16px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,0.2);}
+.modal-btns{display:flex;gap:10px;margin-top:15px}
+.modal-btns button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:bold;color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Arzon Shop</div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <select class="sel" id="lang" onchange="changeLang()">
+      <option value="tg">Тоҷикӣ</option>
+      <option value="ru">Русский</option>
+      <option value="en">English</option>
+    </select>
+    <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button class="icon-btn" onclick="openSettings()" title="Танзимот">⚙️</button>
+    <button class="admin-btn" id="addBtn" onclick="openAdmin()">+ Мол</button>
+  </div>
+</div>
+
+<div class="hero">
+  <h2 id="welcome">Ассалому алейкум, хуш омадед ба Мағозаи МО! 🛍️</h2>
+  <p id="sub">Шумо метавонед ҳама намуди борҳоро аз Чин ҳам дона ва оптом бо нархи дастрас фармоиш диҳед. Дар муддати 20 то 25 рӯз мерасад. Автоаксессуар, техника, либос ва бисёр чизҳои дигар.</p>
+</div>
+
+<div class="search-container">
+  <input type="text" class="search-input" id="searchInput" placeholder="Ҷустуҷӯи мол..." oninput="render()">
+</div>
+
+<div class="grid" id="grid"></div>
+
+<!-- Кнопкаи Саватча (Корзина) дар кунҷи чап -->
+<button id="cartBtnFixed" onclick="openCartModal()" title="Саватча">🛒<span class="cart-badge" id="cartCount">0</span></button>
+
+<!-- Равзанаи Саватча (Корзина) ва Заказ -->
+<div id="cartModal">
+  <div class="modal-content">
+    <h3 style="margin-bottom:10px;">🛒 Саватчаи харид</h3>
+    <div id="cartItemsList" style="max-height:160px;overflow-y:auto;text-align:left;margin-bottom:12px;border-top:1px solid #eee;border-bottom:1px solid #eee;padding:8px 0;">
+      <!-- Молҳои саватча ин ҷо меоянд -->
+    </div>
+    
+    <div style="text-align:left;">
+      <label style="font-size:12px;font-weight:bold;">Ному насаб:</label>
+      <input class="input" id="orderFio" placeholder="Масалан: Алиев Аҳмад" style="margin-top:2px;margin-bottom:6px;">
+      
+      <label style="font-size:12px;font-weight:bold;">Рақами телефон:</label>
+      <input class="input" id="orderTel" placeholder="Масалан: 918955949" style="margin-top:2px;margin-bottom:6px;">
+
+      <p style="margin-top:4px;font-size:14px;font-weight:bold;color:var(--primary);text-align:center;">Ҳамагӣ маблағ: <span id="cartTotalPrice">0</span> сомонӣ</p>
+    </div>
+
+    <div class="modal-btns">
+      <button onclick="sendCartOrder('whatsapp')" style="background:#25D366">WhatsApp</button>
+      <button onclick="sendCartOrder('telegram')" style="background:#0088cc">Telegram</button>
+    </div>
+    <button onclick="closeCartModal()" style="margin-top:8px;background:#ddd;color:#111;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;width:100%">Бекор кардан</button>
+  </div>
+</div>
+
+<!-- Танзимот -->
+<div id="settingsPanel">
+  <div class="admin-box">
+    <h2>⚙️ Танзимот</h2>
+    <div style="margin:12px 0;padding:10px;background:var(--bg);border-radius:10px;text-align:left;font-size:13px;">
+      <b>💻 Андозаи равзана (Экран):</b> <span id="screenResolution"></span>
+    </div>
+    <div id="settingsOwnerArea" style="margin:12px 0;text-align:left;">
+      <p style="margin-bottom:6px;font-size:13px;">Барои идоракунии мағоза ворид шавед:</p>
+      <button class="order-btn" style="background:#6c5ce7;margin-top:0;" onclick="ownerLogin()">🔑 Ворид шудан бо рамз</button>
+    </div>
+    <div id="settingsLogoutArea" style="margin:12px 0;display:none;">
+      <p style="color:#00b894;margin-bottom:6px;font-weight:bold;font-size:13px;">✅ Шумо ҳамчун соҳибкор ворид шудаед</p>
+      <button class="order-btn" style="background:red;margin-top:0;" onclick="ownerLogout()">🔒 Баромад аз соҳиб</button>
+    </div>
+    <button class="order-btn" style="background:#ddd;color:#111;margin-top:8px" onclick="closeSettings()">Бастан</button>
+  </div>
+</div>
+
+<!-- Панели иловаи мол -->
+<div id="adminPanel">
+  <div class="admin-box">
+    <h2>➕ Моли нав</h2>
+    <div class="upload-box" id="upBox" onclick="document.getElementById('file').click()">
+      <span id="uploadText" style="font-size:13px;">📸 Сурат интихоб кун</span>
+      <img id="preview" style="display:none;width:100%;height:130px;object-fit:cover;border-radius:10px;margin-top:8px">
+      <button id="delImgBtn" onclick="event.stopPropagation();deletePreview()" style="display:none;margin-top:8px;background:red;color:#fff;border:none;padding:6px 12px;border-radius:8px;width:100%;cursor:pointer">❌ Тоза кардани сурат</button>
+    </div>
+    <input type="file" id="file" accept="image/*" style="display:none" onchange="previewFile()">
+    <input class="input" id="name" placeholder="Номи мол">
+    <input class="input" id="price" type="number" placeholder="Нархи нав">
+    <input class="input" id="oldprice" type="number" placeholder="Нархи кӯҳна">
+    <textarea class="input" id="desc" placeholder="Хусусиятҳо" style="height:60px;resize:none;"></textarea>
+    <button class="order-btn" style="background:#00b894;padding:12px" onclick="addProduct()">✅ Ҷойгир кун</button>
+    <button class="order-btn" style="background:#ddd;color:#111;margin-top:8px" onclick="closeAdmin()">Бастан</button>
+    <div id="adminList" style="margin-top:15px"></div>
+  </div>
+</div>
+
+<button id="chatBtn" onclick="toggleChat()">💬</button>
+<div id="chatBox">
+  <div class="chat-head"><span>💬 Чат</span><span onclick="toggleChat()" style="cursor:pointer">✕</span></div>
+  <div class="chat-msgs" id="chatMsgs"><div class="msg owner">Салом! Моли худро наёфтед? Нависед!</div></div>
+  <div class="chat-input">
+    <input class="input" id="chatInput" placeholder="Паём..." style="margin:0" onkeypress="if(event.key==='Enter')sendChat()">
+    <button class="order-btn" style="width:auto;padding:10px 16px;margin:0" onclick="sendChat()">➤</button>
+  </div>
+  <div style="display:flex;gap:6px;padding:0 12px 12px">
+    <button onclick="sendToWA()" style="flex:1;padding:8px;border-radius:8px;border:none;background:#25D366;color:#fff;font-size:12px;cursor:pointer">WhatsApp</button>
+    <button onclick="sendToTG()" style="flex:1;padding:8px;border-radius:8px;border:none;background:#0088cc;color:#fff;font-size:12px;cursor:pointer">Telegram</button>
+  </div>
+</div>
+
+<script>
+let trans={
+  tg:{
+    welcome:"Ассалому алейкум, хуш омадед ба Мағозаи МО! 🛍️",
+    sub:"Шумо метавонед ҳама намуди борҳоро аз Чин ҳам дона ва оптом бо нархи дастрас фармоиш диҳед. Дар муддати 20 то 25 рӯз мерасад. Автоаксессуар, техника, либос ва бисёр чизҳои дигар.",
+    order:"Ба саватча"
+  },
+  ru:{
+    welcome:"Добро пожаловать в наш магазин! 🛍️",
+    sub:"Заказы товаров из Китая оптом и в розницу по доступным ценам. Доставка 20-25 дней. Автоаксессуары, техника, одежда и многое другое.",
+    order:"В корзину"
+  },
+  en:{
+    welcome:"Welcome to our shop! 🛍️️",
+    sub:"Order goods from China wholesale and retail at affordable prices. Delivery in 20-25 days. Auto accessories, electronics, clothing and more.",
+    order:"Add to cart"
+  }
+};
+let lang=localStorage.getItem('arzon_lang')||'tg';document.getElementById('lang').value=lang;
+function changeLang(){lang=document.getElementById('lang').value;localStorage.setItem('arzon_lang',lang);document.getElementById('welcome').innerText=trans[lang].welcome;document.getElementById('sub').innerText=trans[lang].sub;render();}
+
+function toggleTheme(){document.body.classList.toggle('dark');let d=document.body.classList.contains('dark');localStorage.setItem('theme',d?'dark':'light');document.getElementById('themeBtn').innerText=d?'☀️':'🌙';}
+if(localStorage.getItem('theme')=='dark'){document.body.classList.add('dark');document.getElementById('themeBtn').innerText='☀️';}
+
+let isOwner=localStorage.getItem('arzon_owner')==='true';
+function updateOwnerUI(){
+  let addBtn = document.getElementById('addBtn');
+  let ownerArea = document.getElementById('settingsOwnerArea');
+  let logoutArea = document.getElementById('settingsLogoutArea');
+  
+  if(isOwner){
+    addBtn.classList.add('show');
+    ownerArea.style.display = 'none';
+    logoutArea.style.display = 'block';
+  } else {
+    addBtn.classList.remove('show');
+    ownerArea.style.display = 'block';
+    logoutArea.style.display = 'none';
+  }
+  render();
+}
+
+function ownerLogin(){
+  let p=prompt("Рамзи соҳибкорро ворид кунед:");
+  if(p==='88884444'){
+    isOwner=true;
+    localStorage.setItem('arzon_owner','true');
+    updateOwnerUI();
+    alert("✅ Шумо ба ҳайси соҳибкор ворид шудед!");
+    closeSettings();
+  }else if(p){
+    alert("Рамз нодуруст аст!");
+  }
+}
+
+function ownerLogout(){
+  isOwner=false;
+  localStorage.removeItem('arzon_owner');
+  updateOwnerUI();
+  closeAdmin();
+  closeSettings();
+  alert("🔒 Баромад карда шуд.");
+}
+
+let products=JSON.parse(localStorage.getItem('arzon_products')||'[]');
+if(products.length==0){products=[{img:"https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=400",name:"Наушник TWS",price:199,old:350,desc:"Бесим"}];save();}
+function save(){localStorage.setItem('arzon_products',JSON.stringify(products));render();}
+
+let cart = JSON.parse(localStorage.getItem('arzon_cart') || '[]');
+
+function render(){
+  let g=document.getElementById('grid');g.innerHTML='';
+  let searchVal = document.getElementById('searchInput').value.toLowerCase();
+  
+  products.forEach((p,i)=>{
+    if(p.name.toLowerCase().includes(searchVal)){
+      let ownerClass=isOwner?' owner':'';
+      g.innerHTML+=`<div class="card${ownerClass}"><button class="del-card" onclick="delProduct(${i})" title="Нест кардани мол">🗑️</button><img src="${p.img}"><div class="card-body"><b>${p.name}</b><p style="font-size:12px;color:#888">${p.desc}</p><span class="price">${p.price} с.</span><span class="old">${p.old} с.</span><button class="order-btn" onclick="addToCart('${p.name}', ${p.price})">${trans[lang].order}</button></div></div>`;
+    }
+  });
+  
+  let list=document.getElementById('adminList');
+  if(list){
+    list.innerHTML='';
+    products.forEach((p,i)=>{
+      list.innerHTML+=`<div style="display:flex;gap:10px;margin:8px 0;align-items:center"><img src="${p.img}" style="width:40px;height:40px;border-radius:6px;object-fit:cover"><div style="flex:1;font-size:13px;"><b>${p.name}</b><br><small>${p.price}с</small></div><button onclick="delProduct(${i})" style="background:red;color:#fff;border:none;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;">❌ Нест</button></div>`;
+    });
+  }
+  updateCartCount();
+}
+
+function addToCart(name, price){
+  let found = cart.find(item => item.name === name);
+  if(found){
+    found.qty += 1;
+  } else {
+    cart.push({ name, price, qty: 1 });
+  }
+  localStorage.setItem('arzon_cart', JSON.stringify(cart));
+  updateCartCount();
+  alert(`✅ "${name}" ба саватча илова шуд!`);
+}
+
+function updateCartCount(){
+  let totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+  document.getElementById('cartCount').innerText = totalQty;
+}
+
+function openCartModal(){
+  let listDiv = document.getElementById('cartItemsList');
+  listDiv.innerHTML = '';
+  
+  if(cart.length === 0){
+    listDiv.innerHTML = '<p style="text-align:center;color:#888;font-size:13px;">Саватчаи шумо холӣ аст.</p>';
+    document.getElementById('cartTotalPrice').innerText = '0';
+    document.getElementById('cartModal').style.display = 'flex';
+    return;
+  }
+
+  let totalSum = 0;
+  cart.forEach((item, index) => {
+    let itemTotal = item.price * item.qty;
+    totalSum += itemTotal;
+    listDiv.innerHTML += `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;">
+        <div><b>${item.name}</b><br><small>${item.price} с. × ${item.qty} = ${itemTotal} с.</small></div>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <button onclick="changeQty(${index}, -1)" style="padding:2px 6px;background:#ddd;border:none;border-radius:4px;cursor:pointer;">-</button>
+          <span>${item.qty}</span>
+          <button onclick="changeQty(${index}, 1)" style="padding:2px 6px;background:#ddd;border:none;border-radius:4px;cursor:pointer;">+</button>
+          <button onclick="removeFromCart(${index})" style="background:red;color:#fff;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;margin-left:4px;">✕</button>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('cartTotalPrice').innerText = totalSum;
+  document.getElementById('cartModal').style.display = 'flex';
+}
+
+function changeQty(index, delta){
+  cart[index].qty += delta;
+  if(cart[index].qty <= 0){
+    cart.splice(index, 1);
+  }
+  localStorage.setItem('arzon_cart', JSON.stringify(cart));
+  updateCartCount();
+  openCartModal();
+}
+
+function removeFromCart(index){
+  cart.splice(index, 1);
+  localStorage.setItem('arzon_cart', JSON.stringify(cart));
+  updateCartCount();
+  openCartModal();
+}
+
+function closeCartModal(){
+  document.getElementById('cartModal').style.display = 'none';
+}
+
+function sendCartOrder(platform){
+  if(cart.length === 0){
+    alert('Саватча холӣ аст!');
+    return;
+  }
+  let fio = document.getElementById('orderFio').value.trim();
+  let tel = document.getElementById('orderTel').value.trim();
+  
+  if(!fio){ alert('Лутфан ному насаби худро нависед!'); return; }
+  if(!tel){ alert('Лутфан рақами телефонро нависед!'); return; }
+
+  let text = `🛍️ ЗАКАЗИ НАВ АЗ САВАТЧА!\n\n` +
+             `👤 Харидор: ${fio}\n` +
+             `📞 Телефон: ${tel}\n\n` +
+             `📦 Молу миқдор:\n`;
+
+  let totalSum = 0;
+  cart.forEach((item, idx) => {
+    let sum = item.price * item.qty;
+    totalSum += sum;
+    text += `${idx + 1}. ${item.name} — ${item.qty} адад × ${item.price}с = ${sum}с\n`;
+  });
+
+  text += `\n💵 Ҳамагӣ маблағ: ${totalSum} сомонӣ`;
+
+  let ownerPhone = "992918955949";
+
+  if(platform === 'whatsapp'){
+    window.open(`https://wa.me/${ownerPhone}?text=${encodeURIComponent(text)}`, '_blank');
+  } else {
+    window.open(`https://t.me/+${ownerPhone}?text=${encodeURIComponent(text)}`, '_blank');
+  }
+  
+  cart = [];
+  localStorage.removeItem('arzon_cart');
+  updateCartCount();
+  closeCartModal();
+}
+
+let base64="";
+function previewFile(){let f=document.getElementById('file').files[0];if(!f) return;let r=new FileReader();r.onload=function(e){base64=e.target.result;document.getElementById('preview').src=base64;document.getElementById('preview').style.display='block';document.getElementById('delImgBtn').style.display='block';document.getElementById('uploadText').innerText='✅ Сурат интихоб шуд';};r.readAsDataURL(f);}
+function deletePreview(){base64="";document.getElementById('file').value="";document.getElementById('preview').style.display='none';document.getElementById('delImgBtn').style.display='none';document.getElementById('uploadText').innerText='📸 Сурат интихоб кун';}
+
+function addProduct(){
+  if(!isOwner){alert('Шумо ҳуқуқи илова кардани молро надоред!');return;}
+  let name=document.getElementById('name').value;
+  let price=document.getElementById('price').value;
+  let oldprice=document.getElementById('oldprice').value;
+  let desc=document.getElementById('desc').value;
+  if(!name||!price){alert('Лутфан ном ва нархи молро ворид кунед!');return;}
+  if(!base64) base64="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400";
+  products.unshift({img:base64,name,price,old:oldprice||price*1.5|0,desc});
+  save();
+  document.getElementById('name').value='';document.getElementById('price').value='';document.getElementById('oldprice').value='';document.getElementById('desc').value='';
+  deletePreview();
+  alert('✅ Мол бо муваффақият илова шуд!');
+  closeAdmin();
+}
+
+function delProduct(i){
+  if(!isOwner){alert('Шумо ҳуқуқи нест кардани молро надоред!');return;}
+  if(confirm('Оё ин молро нест кардан мехоҳед? 🗑️')){products.splice(i,1);save();}
+}
+
+function openAdmin(){
+  if(!isOwner){alert('Лутфан пеш аз ворид шудан ба панели молҳо, дар Танзимот рамзро занед!'); openSettings(); return;}
+  document.getElementById('adminPanel').style.display='flex';
+}
+function closeAdmin(){document.getElementById('adminPanel').style.display='none';}
+
+function openSettings(){
+  document.getElementById('screenResolution').innerText = window.innerWidth + ' x ' + window.innerHeight + ' px (Окна: ' + screen.width + 'x' + screen.height + ')';
+  document.getElementById('settingsPanel').style.display='flex';
+}
+function closeSettings(){document.getElementById('settingsPanel').style.display='none';}
+
+let chatOpen=false;
+function toggleChat(){chatOpen=!chatOpen;document.getElementById('chatBox').style.display=chatOpen?'flex':'none';}
+let chats=JSON.parse(localStorage.getItem('arzon_chats')||'[]');
+function renderChat(){let box=document.getElementById('chatMsgs');box.innerHTML='<div class="msg owner">Салом! Моли худро наёфтед? Нависед!</div>';chats.forEach(c=>{box.innerHTML+=`<div class="msg ${c.type}">${c.text}</div>`;});box.scrollTop=box.scrollHeight;}
+renderChat();
+
+function sendChat(){
+  let inp=document.getElementById('chatInput');let t=inp.value.trim();if(!t) return;
+  chats.push({type:'user',text:t});localStorage.setItem('arzon_chats',JSON.stringify(chats));
+  inp.value='';renderChat();
+  setTimeout(()=>{
+    chats.push({type:'owner',text:"Раҳмат! Паёми шумо қабул шуд. Ба зудӣ ҷавоб медиҳем ё бевосита ба WhatsApp-и мо нависед: 918955949"});
+    localStorage.setItem('arzon_chats',JSON.stringify(chats));renderChat();
+  },800);
+}
+
+function sendToWA(){window.open(`https://wa.me/992918955949?text=${encodeURIComponent("💬 Чат аз сайт: Салом")}`,'_blank');}
+function sendToTG(){window.open(`https://t.me/+992918955949`,'_blank');}
+
+updateOwnerUI();
+</script>
+</body>
+</html>
